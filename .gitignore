@@ -1,0 +1,12 @@
+.bundle/
+.databricks/
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+*.pyc
+.DS_Store
+
