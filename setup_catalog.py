@@ -1,13 +1,24 @@
 import os
 from databricks.sdk import WorkspaceClient
 
-# Initializes using your local Databricks CLI authentication (~/.databrickscfg or environment variables)
-w = WorkspaceClient()
-
 # Set your SQL Warehouse ID
 WAREHOUSE_ID = os.getenv("DATABRICKS_WAREHOUSE_ID")
 
-# 1. Create Catalog, Schema, and Volume via SQL
+if not WAREHOUSE_ID:
+  raise ValueError("DATABRICKS_WAREHOUSE_ID environment variable is missing.")
+
+# Initializes using your local Databricks CLI authentication (~/.databrickscfg or environment variables)
+w = WorkspaceClient(insecure=True)
+
+# 1. Ensure SQL Warehouse is active before running queries
+print(f"Checking state of SQL Warehouse {WAREHOUSE_ID}...")
+warehouse = w.warehouses.get(id=WAREHOUSE_ID)
+if warehouse.state.value != "RUNNING":
+  print("Starting SQL Warehouse... (this may take a few minutes)")
+  w.warehouses.start(id=WAREHOUSE_ID).result()
+  print("SQL Warehouse is now RUNNING.")
+
+# 2. Create Catalog, Schema, and Volume via SQL
 sql_statements = [
     "CREATE CATALOG IF NOT EXISTS dev",
     "CREATE SCHEMA IF NOT EXISTS dev.default",
@@ -17,11 +28,11 @@ sql_statements = [
 print("Creating catalog, schema, and volume...")
 for stmt in sql_statements:
     w.statement_execution.execute_statement(
-        warehouse_id=WAREHOUSE_ID, statement=stmt
+        warehouse_id=WAREHOUSE_ID, statement=stmt, wait_timeout="900s"
     )
 print("Catalog hierarchy created successfully.")
 
-# 2. Upload local CSV file to the Unity Catalog Volume
+# 3. Upload local CSV file to the Unity Catalog Volume
 local_file_path = "local_data/sample_orders.csv"
 volume_path = "/Volumes/dev/default/raw_data/sample_orders.csv"
 
@@ -30,7 +41,7 @@ with open(local_file_path, "rb") as f:
     w.files.upload(volume_path, f, overwrite=True)
 print("File uploaded successfully.")
 
-# 3. Create Delta Table from uploaded CSV
+# 4. Create Delta Table from uploaded CSV
 create_table_sql = """
 CREATE TABLE IF NOT EXISTS dev.default.sample_orders 
 AS SELECT * FROM read_files(
