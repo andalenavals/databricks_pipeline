@@ -2,6 +2,12 @@
 bundle:
   name: databricks_pipeline
 
+artifacts:
+  default:
+    type: whl
+    path: . # Builds local code into a .whl automatically on deploy
+    build: python -m build --wheel
+    
 include:
   - resources/*.yml
 
@@ -9,4 +15,3 @@ targets:
   dev:
     mode: development
     default: true
-

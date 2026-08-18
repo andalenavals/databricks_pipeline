@@ -1,7 +1,7 @@
 resources:
   jobs:
     daily_summary_job:
-      name: databricks_pipeline_daily_summary
+      name: "[${bundle.environment}] databricks_pipeline_daily_summary"
       description: "Build a simple per-customer order summary from CSV input."
       tags:
         project: databricks_pipeline
@@ -14,11 +14,13 @@ resources:
               - --input-path
               - dbfs:/FileStore/databricks_pipeline/sample_orders.csv
               - --output-path
-              - dbfs:/FileStore/databricks_pipeline/outputs/daily_summary
+              - /Volumes/${bundle.environment}/default/outputs/daily_summary
+              #- dbfs:/FileStore/databricks_pipeline/outputs/daily_summary
           environment_key: default
       environments:
         - environment_key: default
           spec:
             environment_version: "2"
-            dependencies: []
+            dependencies: 
+              - ../dist/*.whl
 
