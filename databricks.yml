@@ -1,17 +1,19 @@
-# yaml-language-server: $schema=bundle_config_schema.json
 bundle:
   name: databricks_pipeline
 
 artifacts:
   default:
     type: whl
-    path: . # Builds local code into a .whl automatically on deploy
+    path: .
     build: python -m build --wheel
-    
+
 include:
-  - resources/*.yml
+  - resources/databricks_pipeline_serverless_job.yml
+  # - resources/*.yml
 
 targets:
   dev:
     mode: development
     default: true
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}

@@ -1,0 +1,25 @@
+resources:
+  jobs:
+    daily_summary_job:
+      name: "[${bundle.target}] databricks_pipeline_daily_summary"
+      description: "Build a simple per-customer order summary from CSV input."
+      tags:
+        project: databricks_pipeline
+        owner: andres
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: daily_summary
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/databricks_pipeline/tasks/daily_summary.py
+            parameters:
+              - "--input"
+              - "workspace.dev_default.sample_orders"
+              - "--output"
+              - "workspace.dev_default.daily_summary"

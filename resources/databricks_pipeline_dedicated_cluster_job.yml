@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    daily_summary_job:
+      name: "[${bundle.target}] databricks_pipeline_daily_summary"
+
+      job_clusters:
+        - job_cluster_key: pipeline_cluster
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 0
+            spark_conf:
+              spark.master: "local[*]"
+              spark.databricks.cluster.profile: "singleNode"
+            custom_tags:
+              ResourceClass: "SingleNode"
+
+      tasks:
+        - task_key: daily_summary
+          job_cluster_key: pipeline_cluster
+          python_wheel_task:
+            package_name: databricks_pipeline
+            entry_point: daily-summary
+            parameters:
+              - "--input"
+              - "dev.dev_default.sample_orders"
+              - "--output"
+              - "dev.dev_default.daily_summary"

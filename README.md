@@ -35,7 +35,7 @@ pytest
 
 ## Run locally:
 
-    $ python -m databricks_pipeline.tasks.daily_summary --input-path local_data/sample_orders.csv --output-path local_data/output_daily_summary
+    $ python -m databricks_pipeline.tasks.daily_summary --input local_data/sample_orders.csv --output local_data/output_daily_summary
 
     It requires manual installation of hadoop.dll and winutils.exe
 
