@@ -28,8 +28,9 @@ jobs:
           python -m pip install --upgrade pip build
           python -m build --wheel
 
-      - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v0
+      - name: Install Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
       - name: Validate Bundle
         run: databricks bundle validate -t dev
