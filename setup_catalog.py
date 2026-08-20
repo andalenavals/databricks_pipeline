@@ -14,7 +14,7 @@ w = WorkspaceClient()
 # Configuration
 DESIRED_CATALOG = "dev"
 FALLBACK_CATALOG = "workspace"  # Uses the workspace catalog active in your environment
-SCHEMA_NAME = "dev_default_work"
+SCHEMA_NAME = "dev_default"
 VOLUME_NAME = "raw_data"
 TABLE_NAME = "sample_orders"
 WAREHOUSE_ID = os.getenv("DATABRICKS_WAREHOUSE_ID")

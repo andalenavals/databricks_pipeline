@@ -12,12 +12,12 @@ customer-order summary pipeline.
 
 ## Project layout
 
-- `databricks.yml` - bundle entrypoint
-- `pyproject.toml` - Package configuration file defining project dependencies, Python build settings, and CLI entry points. This is used to build a codebase into a standard .whl
+- `databricks.yml` - bundle entrypoint (Master Databricks Asset Bundle orchestrator) DAB orchestrator
+- `pyproject.toml` - (Python tooling) Package configuration file defining project dependencies, Python build settings, and CLI entry points. This is used to build a codebase into a standard .whl
 - `src/databricks_pipeline/`: The main Python package directory:
     - `core.py`: Business logic and aggregation methods (such as aggregate_customer_orders) along with fallback mock data (DEMO_ORDERS).
     - `tasks/` (e.g., daily_summary.py): Execution scripts that parse CLI arguments, handle PySpark SparkSession initialization, load raw data, and write output files.
-- `resources/` - Declarative YAML files defining Databricks workflows, job schedules, and compute configurations.
+- `resources/databricks_pipeline_job.yml` - (Specific Databricks resource definition managed by DABs via databricks.yml) Declarative YAML files defining Databricks workflows, job schedules, and compute configurations.
 - `src/databricks_pipeline/` - reusable Python package and job entrypoint
 - `tests/` - local unit tests for the pure-Python logic
 - `setup_catalog.py` - create catalog, schema and tables in Databricks. Run `$ databricks warehouses list` to find the ID
@@ -27,7 +27,9 @@ customer-order summary pipeline.
 ```bash
 python3 -m venv .venv
 source .venv/Scripts/activate
-pip install -e .[dev]
+
+pip config set global.trusted-host "pypi.org files.pythonhosted.org pypi.python.org" #bypass certificate check (corporate setup, run only once)
+pip install --no-build-isolation -e .[dev]
 pytest
 ```
 
@@ -41,7 +43,7 @@ pytest
     export HADOOP_HOME="C:\\hadoop"
     export PATH="$PATH:/c/hadoop/bin"   
 
-    Also install Java (OpenJDK 25)
+    Also install Java (OpenJDK 17)
     $ winget install Microsoft.OpenJDK.17
 
 ## Databricks setup

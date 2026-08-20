@@ -9,7 +9,7 @@ description = "A simple Databricks bundle project for order summaries"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Andres" }]
-dependencies = []
+dependencies = ["delta-spark==3.2.0", "pyspark==3.5.1"]
 
 [project.scripts]
 daily-summary = "databricks_pipeline.tasks.daily_summary:main"
