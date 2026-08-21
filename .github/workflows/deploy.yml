@@ -31,16 +31,6 @@ jobs:
       - name: Run Unit Tests
         run: pytest
 
-      - name: Setup Databricks CLI
-        uses: databricks/setup-cli@main
-
-      - name: Validate Bundle
-        run: databricks bundle validate -e prod
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-
-
   deploy-and-run:
     name: Validate, Deploy, and Run
     runs-on: ubuntu-latest
