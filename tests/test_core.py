@@ -1,26 +1,84 @@
-from databricks_pipeline.core import DEMO_ORDERS, aggregate_customer_orders, normalize_orders
+import pytest
+from pyspark.sql import SparkSession
+from pyspark.sql.types import DoubleType, StringType, StructField, StructType
+
+from databricks_pipeline.core import aggregate_daily_summary
 
 
-def test_normalize_orders_skips_bad_rows():
-    rows = [
-        {"order_id": "a", "customer_id": "c1", "amount": "12.5", "status": "Completed"},
-        {"order_id": "", "customer_id": "c1", "amount": "5", "status": "completed"},
-        {"order_id": "b", "customer_id": "c2", "amount": "bad", "status": "completed"},
+def test_aggregate_daily_summary_success(spark: SparkSession):
+    """Tests that aggregate_daily_summary correctly groups by order_date and customer_id."""
+    schema = StructType(
+        [
+            StructField("order_date", StringType(), True),
+            StructField("customer_id", StringType(), True),
+            StructField("order_id", StringType(), True),
+            StructField("amount", DoubleType(), True),
+        ]
+    )
+
+    data = [
+        ("2026-08-20", "cust_A", "ord_001", 100.0),
+        ("2026-08-20", "cust_A", "ord_002", 50.5),
+        ("2026-08-20", "cust_B", "ord_003", 200.0),
+        ("2026-08-21", "cust_A", "ord_004", 75.0),
     ]
 
-    normalized = normalize_orders(rows)
+    input_df = spark.createDataFrame(data, schema)
 
-    assert len(normalized) == 1
-    assert normalized[0].status == "completed"
-    assert normalized[0].amount == 12.5
+    # Execute transformation from core.py
+    result_df = aggregate_daily_summary(input_df)
+    results = result_df.collect()
+
+    # Convert results to list of dicts for clean asserting
+    records = [row.asDict() for row in results]
+
+    # Assert correct number of grouped rows
+    assert len(records) == 3
+
+    # Assert customer A on 2026-08-20 (2 orders, $150.5 total)
+    assert records[0] == {
+        "order_date": "2026-08-20",
+        "customer_id": "cust_A",
+        "total_orders": 2,
+        "total_spent": pytest.approx(150.5),
+    }
+
+    # Assert customer B on 2026-08-20 (1 order, $200.0 total)
+    assert records[1] == {
+        "order_date": "2026-08-20",
+        "customer_id": "cust_B",
+        "total_orders": 1,
+        "total_spent": pytest.approx(200.0),
+    }
+
+    # Assert customer A on 2026-08-21 (1 order, $75.0 total)
+    assert records[2] == {
+        "order_date": "2026-08-21",
+        "customer_id": "cust_A",
+        "total_orders": 1,
+        "total_spent": pytest.approx(75.0),
+    }
 
 
-def test_aggregate_customer_orders_matches_demo_data():
-    summary = aggregate_customer_orders(DEMO_ORDERS)
+def test_aggregate_daily_summary_empty_dataframe(spark: SparkSession):
+    """Tests that aggregate_daily_summary handles empty DataFrames gracefully."""
+    schema = StructType(
+        [
+            StructField("order_date", StringType(), True),
+            StructField("customer_id", StringType(), True),
+            StructField("order_id", StringType(), True),
+            StructField("amount", DoubleType(), True),
+        ]
+    )
 
-    assert summary == [
-        {"customer_id": "c-001", "completed_order_count": 2, "completed_amount_total": 160.5},
-        {"customer_id": "c-002", "completed_order_count": 1, "completed_amount_total": 78.25},
-        {"customer_id": "c-003", "completed_order_count": 1, "completed_amount_total": 15.0},
-    ]
+    input_df = spark.createDataFrame([], schema)
 
+    result_df = aggregate_daily_summary(input_df)
+
+    assert result_df.count() == 0
+    assert set(result_df.columns) == {
+        "order_date",
+        "customer_id",
+        "total_orders",
+        "total_spent",
+    }

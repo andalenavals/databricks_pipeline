@@ -1,10 +1,19 @@
-from __future__ import annotations
-
-import sys
-from pathlib import Path
+import pytest
+from pyspark.sql import SparkSession
 
 
-SRC_DIR = Path(__file__).resolve().parents[1] / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
+@pytest.fixture(scope="session")
+def spark():
+    """Creates a local PySpark session for running tests off-cluster."""
+    session = (
+        SparkSession.builder.master("local[1]")
+        .appName("DatabricksPipelineUnitTest")
+        .config("spark.sql.shuffle.partitions", "1")
+        .config("spark.default.parallelism", "1")
+        .config("spark.ui.enabled", "false")
+        .getOrCreate()
+    )
 
+    session.sparkContext.setLogLevel("ERROR")
+    yield session
+    session.stop()
